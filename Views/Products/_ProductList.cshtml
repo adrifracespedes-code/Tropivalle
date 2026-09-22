@@ -1,0 +1,32 @@
+@model IEnumerable<Product>
+<div class="catalog-list">
+@foreach (var product in Model)
+{
+    <div class="catalog-list-item card border-0 shadow-sm mb-3">
+        <div class="row g-0 align-items-center">
+            <div class="col-md-2">
+                <img src="@(string.IsNullOrWhiteSpace(product.ImageUrl) ? "https://placehold.co/400x300/e8f8ef/1a5c3a?text=TropiValle" : product.ImageUrl)"
+                     class="list-thumb" alt="@product.Name" />
+            </div>
+            <div class="col-md-7">
+                <div class="card-body py-3">
+                    <span class="badge badge-pack mb-1">@(product.Category ?? "Producto")</span>
+                    <h5 class="mb-1 fw-bold" style="color: var(--tv-green-dark);">@product.Name</h5>
+                    <p class="text-muted small mb-0">@product.Description</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card-body py-3 text-md-end">
+                    <div class="price-tag mb-2">@product.Price.ToString("N2") BOB</div>
+                    <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm">Ver detalle</a>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-outline-warning btn-sm">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-outline-danger btn-sm">Eliminar</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+</div>

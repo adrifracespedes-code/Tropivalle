@@ -1,13 +1,34 @@
 @model IEnumerable<Product>
 @{
     ViewData["Title"] = "Productos";
+    var category = (string)(ViewBag.Category ?? "todo");
+    var sort = (string)(ViewBag.Sort ?? "categoria");
+    var viewMode = (string)(ViewBag.ViewMode ?? "instaview");
+    var categories = (string[])(ViewBag.Categories ?? Array.Empty<string>());
+    var total = (int)(ViewBag.TotalCount ?? Model.Count());
+    var isTodo = string.Equals(category, "todo", StringComparison.OrdinalIgnoreCase);
+
+    string Link(string? cat = null, string? s = null, string? v = null)
+    {
+        cat ??= category;
+        s ??= sort;
+        v ??= viewMode;
+        return Url.Action("Index", "Products", new { category = cat, sort = s, view = v })!;
+    }
+
+    // Separar por categoría: Nectar TropiValle / Agua de Mesa / otros
+    var nectar = Model.Where(p => string.Equals(p.Category, "Nectar TropiValle", StringComparison.OrdinalIgnoreCase)).ToList();
+    var agua = Model.Where(p => string.Equals(p.Category, "Agua de Mesa", StringComparison.OrdinalIgnoreCase)).ToList();
+    var otros = Model.Where(p =>
+        !string.Equals(p.Category, "Nectar TropiValle", StringComparison.OrdinalIgnoreCase) &&
+        !string.Equals(p.Category, "Agua de Mesa", StringComparison.OrdinalIgnoreCase)).ToList();
 }
 
-<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
     <div>
-        <h1 class="mb-1"><i class="bi bi-cup-straw me-2"></i>Nuestros jugos</h1>
+        <h1 class="mb-1"><i class="bi bi-cup-straw me-2"></i>Catálogo TropiValle</h1>
         <div class="section-divider"></div>
-        <p class="subtitle mb-0">Botellas individuales y paquetes de 12 · 100% naturales</p>
+        <p class="subtitle mb-0">Néctares y Agua de Mesa · Cochabamba, Bolivia</p>
     </div>
     @if (User.IsInRole("Admin"))
     {
@@ -17,60 +38,156 @@
     }
 </div>
 
+<div class="catalog-toolbar card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-5">
+                <label class="form-label small text-muted mb-1 fw-semibold">Categorías</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="@Link(cat: "todo")"
+                       class="btn btn-sm filter-chip @(isTodo ? "active" : "")">
+                        Todo
+                    </a>
+                    @foreach (var c in categories)
+                    {
+                        <a href="@Link(cat: c)"
+                           class="btn btn-sm filter-chip @(string.Equals(category, c, StringComparison.OrdinalIgnoreCase) ? "active" : "")">
+                            @c
+                        </a>
+                    }
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <label class="form-label small text-muted mb-1 fw-semibold">Ordenar por</label>
+                <select class="form-select form-select-sm" id="sortSelect" onchange="location = this.value;">
+                    @if (sort == "categoria") { <option value="@Link(s: "categoria")" selected>Categorías</option> } else { <option value="@Link(s: "categoria")">Categorías</option> }
+                    @if (sort == "precio_asc") { <option value="@Link(s: "precio_asc")" selected>Menor precio</option> } else { <option value="@Link(s: "precio_asc")">Menor precio</option> }
+                    @if (sort == "precio_desc") { <option value="@Link(s: "precio_desc")" selected>Mayor precio</option> } else { <option value="@Link(s: "precio_desc")">Mayor precio</option> }
+                    @if (sort == "az") { <option value="@Link(s: "az")" selected>A-Z</option> } else { <option value="@Link(s: "az")">A-Z</option> }
+                    @if (sort == "za") { <option value="@Link(s: "za")" selected>Z-A</option> } else { <option value="@Link(s: "za")">Z-A</option> }
+                </select>
+            </div>
+            <div class="col-md-4 col-lg-3">
+                <label class="form-label small text-muted mb-1 fw-semibold">Modo de exhibición</label>
+                <div class="btn-group w-100" role="group">
+                    <a href="@Link(v: "instaview")" class="btn btn-sm btn-outline-success @(viewMode == "instaview" ? "active" : "")">
+                        <i class="bi bi-grid-3x3-gap me-1"></i>Instaview
+                    </a>
+                    <a href="@Link(v: "lista")" class="btn btn-sm btn-outline-success @(viewMode == "lista" ? "active" : "")">
+                        <i class="bi bi-list-ul me-1"></i>Lista
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-1 text-md-end">
+                <span class="small text-muted">@total prod.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (!Model.Any())
 {
     <div class="alert alert-info border-0 shadow-sm">
         <i class="bi bi-info-circle me-1"></i>
-        Todavía no hay productos. @if (User.IsInRole("Admin")) { <span>Crea el primero.</span> }
+        No hay productos en esta categoría.
+        @if (User.IsInRole("Admin")) { <span>Crea el primero o cambia el filtro.</span> }
     </div>
 }
 else
 {
-    <div class="row g-4">
-        @foreach (var product in Model)
+    @* Cuando es "Todo", mostrar secciones separadas *@
+    if (isTodo)
+    {
+        if (nectar.Any())
         {
-            var isPack = (product.Category ?? "").Contains("Pack", StringComparison.OrdinalIgnoreCase)
-                      || (product.Category ?? "").Contains("12", StringComparison.OrdinalIgnoreCase);
-            <div class="col-md-6 col-lg-4">
-                <div class="card product-card h-100">
-                    <img src="@(string.IsNullOrWhiteSpace(product.ImageUrl) ? "https://placehold.co/800x500/e8f8ef/1a5c3a?text=Tropivalle" : product.ImageUrl)"
-                         class="card-img-top product-image" alt="@product.Name" />
-                    <div class="card-body d-flex flex-column">
-                        @if (isPack)
-                        {
-                            <span class="badge badge-pack align-self-start mb-2">
-                                <i class="bi bi-box-seam me-1"></i>@(product.Category ?? "Pack x12")
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-individual align-self-start mb-2">
-                                <i class="bi bi-bottle me-1"></i>@(product.Category ?? "Individual")
-                            </span>
-                        }
-                        <h5 class="card-title fw-bold" style="color: var(--tv-green-dark);">@product.Name</h5>
-                        <p class="card-text text-muted small flex-grow-1">@product.Description</p>
-                        <div class="mt-2">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="price-tag">@product.Price.ToString("C")</span>
-                                <span class="@(product.Stock > 10 ? "stock-ok" : "stock-low") small">
-                                    <i class="bi bi-box me-1"></i>Stock: @product.Stock
-                                </span>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1">
-                                    Ver detalle
-                                </a>
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-outline-warning btn-sm">Editar</a>
-                                    <a asp-action="Delete" asp-route-id="@product.Id" class="btn btn-outline-danger btn-sm">Eliminar</a>
-                                }
-                            </div>
-                        </div>
-                    </div>
+            <div class="catalog-section mb-5">
+                <div class="catalog-section-header">
+                    <h2 class="catalog-section-title"><i class="bi bi-cup-hot me-2"></i>Nectar TropiValle</h2>
+                    <div class="section-divider"></div>
                 </div>
+                @if (viewMode == "lista")
+                {
+                    @await Html.PartialAsync("_ProductList", nectar)
+                }
+                else
+                {
+                    @await Html.PartialAsync("_ProductGrid", nectar)
+                }
             </div>
         }
-    </div>
+        if (agua.Any())
+        {
+            <div class="catalog-section mb-5">
+                <div class="catalog-section-header">
+                    <h2 class="catalog-section-title"><i class="bi bi-droplet me-2"></i>Agua de Mesa</h2>
+                    <div class="section-divider"></div>
+                </div>
+                @if (viewMode == "lista")
+                {
+                    @await Html.PartialAsync("_ProductList", agua)
+                }
+                else
+                {
+                    @await Html.PartialAsync("_ProductGrid", agua)
+                }
+            </div>
+        }
+        if (otros.Any())
+        {
+            <div class="catalog-section mb-5">
+                <div class="catalog-section-header">
+                    <h2 class="catalog-section-title"><i class="bi bi-grid me-2"></i>Otros</h2>
+                    <div class="section-divider"></div>
+                </div>
+                @if (viewMode == "lista")
+                {
+                    @await Html.PartialAsync("_ProductList", otros)
+                }
+                else
+                {
+                    @await Html.PartialAsync("_ProductGrid", otros)
+                }
+            </div>
+        }
+        if (!nectar.Any() && !agua.Any() && !otros.Any())
+        {
+            <div class="alert alert-info border-0">Sin productos.</div>
+        }
+    }
+    else
+    {
+        <div class="catalog-section mb-4">
+            <div class="catalog-section-header">
+                <h2 class="catalog-section-title">
+                    @if (string.Equals(category, "Agua de Mesa", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <i class="bi bi-droplet me-2"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-cup-hot me-2"></i>
+                    }
+                    @category
+                </h2>
+                <div class="section-divider"></div>
+            </div>
+            @if (viewMode == "lista")
+            {
+                @await Html.PartialAsync("_ProductList", Model)
+            }
+            else
+            {
+                @await Html.PartialAsync("_ProductGrid", Model)
+            }
+        </div>
+    }
 }
+
+<div class="catalog-notice mt-4">
+    <div class="alert alert-warning border-0 shadow-sm mb-0">
+        <i class="bi bi-shield-exclamation me-1"></i>
+        <strong>Consejo de seguridad:</strong>
+        No realice pagos a desconocidos. Las ofertas y productos exhibidos en este catálogo son responsabilidad de
+        <strong>INDUSTRIAS ALIMENTICIAS TROPIVALLE</strong>.
+    </div>
+</div>

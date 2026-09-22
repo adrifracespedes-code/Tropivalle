@@ -1,0 +1,108 @@
+@model IEnumerable<Sale>
+@{
+    ViewData["Title"] = "Reporte de ventas";
+    var period = (string)(ViewBag.Period ?? "mensual");
+    var from = (DateTime)ViewBag.From;
+    var to = (DateTime)ViewBag.To;
+    var total = (decimal)ViewBag.Total;
+    var units = (int)ViewBag.Units;
+}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4 no-print">
+    <div>
+        <h1 class="mb-1"><i class="bi bi-file-earmark-text me-2"></i>Reporte de ventas</h1>
+        <div class="section-divider"></div>
+        <p class="subtitle mb-0">Periodo @period · @from.ToLocalTime().ToString("dd/MM/yyyy") — @to.ToLocalTime().AddSeconds(-1).ToString("dd/MM/yyyy")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="ExportPdf" asp-route-period="@period" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+        </a>
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+            <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        <a asp-action="List" asp-route-period="@period" class="btn btn-outline-primary">Volver al listado</a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm report-sheet">
+    <div class="card-body">
+        <div class="text-center mb-4">
+            <h2 class="h4 mb-1" style="color: var(--tv-green-dark);">Industrias Alimenticias TropiValle</h2>
+            <div class="text-muted">Reporte de ventas (@period)</div>
+            <div class="small text-muted">Generado: @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="p-3 rounded bg-light">
+                    <div class="small text-muted">Total vendido</div>
+                    <div class="fs-4 fw-bold">@total.ToString("N2") BOB</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded bg-light">
+                    <div class="small text-muted">Unidades</div>
+                    <div class="fs-4 fw-bold">@units</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-3 rounded bg-light">
+                    <div class="small text-muted">Registros</div>
+                    <div class="fs-4 fw-bold">@Model.Count()</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-success">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th class="text-end">Cant.</th>
+                        <th class="text-end">P. unit.</th>
+                        <th class="text-end">Total (BOB)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted">Sin ventas en este periodo.</td></tr>
+                }
+                else
+                {
+                    foreach (var s in Model)
+                    {
+                        <tr>
+                            <td>@s.SoldAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@s.ProductName</td>
+                            <td>@(s.Category ?? "—")</td>
+                            <td class="text-end">@s.Quantity</td>
+                            <td class="text-end">@s.UnitPrice.ToString("N2")</td>
+                            <td class="text-end">@s.TotalAmount.ToString("N2")</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold">
+                        <td colspan="3">TOTAL</td>
+                        <td class="text-end">@units</td>
+                        <td></td>
+                        <td class="text-end">@total.ToString("N2") BOB</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="small text-muted mt-3 mb-0">Calle Salazar No. 1691 · Zona La Chimba · Cochabamba, Bolivia · +591-7-595-0776</p>
+    </div>
+</div>
+
+<style>
+@@media print {
+    .no-print, header, footer, .navbar, .btn { display: none !important; }
+    .main-default { padding-top: 0 !important; }
+    .report-sheet { box-shadow: none !important; }
+}
+</style>

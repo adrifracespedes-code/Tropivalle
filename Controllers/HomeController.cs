@@ -4,7 +4,8 @@ namespace EcommerceApp.Controllers;
 
 public class HomeController : Controller
 {
-    public IActionResult Index() => RedirectToAction("Index", "Products");
+    // Página de inicio (hero). El catálogo está en Products.
+    public IActionResult Index() => View();
 
     public IActionResult Error() => View();
 }

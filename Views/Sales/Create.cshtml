@@ -1,0 +1,59 @@
+@model SaleCreateViewModel
+@{
+    ViewData["Title"] = "Registrar venta";
+}
+<div class="page-header mb-4">
+    <h1 class="mb-1" style="color: var(--tv-green-dark);">Registrar venta</h1>
+    <div class="section-divider"></div>
+    <p class="text-muted">La venta se refleja en la gráfica (semana / mes / año).</p>
+</div>
+
+<div class="row">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm p-4">
+            <form asp-controller="Sales" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="ProductId" class="form-label"></label>
+                    <select asp-for="ProductId" class="form-select" asp-items="ViewBag.Products">
+                        <option value="">— Seleccionar producto —</option>
+                    </select>
+                    <span asp-validation-for="ProductId" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Quantity" class="form-label"></label>
+                        <input asp-for="Quantity" class="form-control" type="number" min="1" step="1" value="@(Model.Quantity > 0 ? Model.Quantity : 1)" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="SoldAt" class="form-label"></label>
+                        <input asp-for="SoldAt" class="form-control" type="datetime-local"
+                               value="@Model.SoldAt.ToString("yyyy-MM-ddTHH:mm")" />
+                        <span asp-validation-for="SoldAt" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <input asp-for="Notes" class="form-control" placeholder="Opcional" maxlength="300" />
+                    <span asp-validation-for="Notes" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Guardar venta
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-primary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

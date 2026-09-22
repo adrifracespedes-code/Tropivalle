@@ -1,8 +1,103 @@
 @{
     ViewData["Title"] = "Inicio";
 }
-<div class="text-center py-5">
-    <h1>EcommerceApp</h1>
-    <p class="lead">Aplicación web ASP.NET Core conectada a Supabase.</p>
-    <a asp-controller="Products" asp-action="Index" class="btn btn-primary">Ver productos</a>
-</div>
+
+<section class="hero-mock">
+    <div class="hero-orbs" aria-hidden="true">
+        <span class="orb orb-a"></span>
+        <span class="orb orb-b"></span>
+        <span class="orb orb-c"></span>
+    </div>
+    <div class="container hero-inner">
+        <div class="hero-copy">
+            <h1 class="hero-headline animate-in" style="--d:0.15s">
+                Refrescos naturales<br />
+                que cruzan el<br />
+                <span class="accent">sabor con la vida</span>
+            </h1>
+            <div class="hero-rule animate-in" style="--d:0.3s"></div>
+            <p class="hero-lead animate-in" style="--d:0.4s">
+                Jugos naturales, hechos con fruta real.<br />
+                Sin conservadores. Solo sabor que te conecta.
+            </p>
+            <a asp-controller="Products" asp-action="Index" class="hero-explore animate-in" style="--d:0.55s">
+                <span class="explore-circle"><i class="bi bi-arrow-up-right"></i></span>
+                <span class="explore-text">
+                    <strong>Explora los sabores</strong>
+                    <small>100% naturales</small>
+                </span>
+            </a>
+        </div>
+    </div>
+    <div class="hero-wordmark" aria-hidden="true">TROPIVALLE</div>
+</section>
+
+<section id="nosotros" class="home-section">
+    <div class="container">
+        <p class="sec-label">Nosotros</p>
+        <h2 class="sec-title">Del valle a tu mesa</h2>
+        <div class="sec-line"></div>
+        <p class="sec-text">
+            En Tropivalle elaboramos jugos y refrescos naturales con fruta fresca del valle.
+            Sin azúcares añadidos artificiales, sin colorantes y con todo el sabor de lo auténtico.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+            <span class="tag-pill">100% natural</span>
+            <span class="tag-pill">Sin conservantes</span>
+            <span class="tag-pill">Fruta real</span>
+        </div>
+    </div>
+</section>
+
+<section id="ingredientes" class="home-section home-section-alt">
+    <div class="container">
+        <p class="sec-label">Ingredientes</p>
+        <h2 class="sec-title">Solo lo esencial</h2>
+        <div class="sec-line"></div>
+        <div class="row g-4 mt-2">
+            <div class="col-md-4">
+                <div class="info-card">
+                    <i class="bi bi-droplet-half"></i>
+                    <h3>Fruta del valle</h3>
+                    <p>Seleccionada en su punto de madurez para máximo sabor.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <i class="bi bi-shield-check"></i>
+                    <h3>Sin aditivos</h3>
+                    <p>Cero colorantes, conservadores ni azúcares artificiales.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="info-card">
+                    <i class="bi bi-recycle"></i>
+                    <h3>Empaque responsable</h3>
+                    <p>Botellas y packs para el día a día.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="sostenibilidad" class="home-section">
+    <div class="container">
+        <p class="sec-label">Sostenibilidad</p>
+        <h2 class="sec-title">Cuidamos el origen</h2>
+        <div class="sec-line"></div>
+        <p class="sec-text">
+            Trabajamos con productores locales y procesos que respetan el entorno.
+            Cada botella es un pequeño ritual de frescura y compromiso con el valle.
+        </p>
+    </div>
+</section>
+
+<section id="tienda" class="home-cta">
+    <div class="container text-center">
+        <h2 class="cta-title">Descubre el sabor del valle</h2>
+        <p class="cta-sub">Néctares · Agua de Mesa · Cochabamba</p>
+        <a asp-controller="Products" asp-action="Index" class="btn btn-buy btn-lg">
+            Comprar ahora <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+</section>

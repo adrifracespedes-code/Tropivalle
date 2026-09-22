@@ -10,8 +10,7 @@
                 <h2 class="text-danger">¿Eliminar este producto?</h2>
                 <h4>@Model.Name</h4>
                 <p>@Model.Description</p>
-                <p><strong>Precio:</strong> @Model.Price.ToString("C")</p>
-                <p><strong>Stock:</strong> @Model.Stock</p>
+                <p><strong>Precio:</strong> @Model.Price.ToString("N2") + " BOB"</p>
 
                 <form asp-action="Delete" method="post">
                     <input type="hidden" asp-for="Id" />

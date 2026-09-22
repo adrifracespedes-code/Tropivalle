@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tropivalle — Inicio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #070f0b;
+      --accent: #a8f000;
+      --accent-soft: #c8ff4a;
+      --nav-h: 72px;
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--black);
+      color: #fff;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* NAV */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h);
+      display: flex; align-items: center;
+      background: rgba(7, 15, 11, 0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(168, 240, 0, 0.06);
+      transition: background 0.3s;
+    }
+    .nav.scrolled { background: rgba(7, 15, 11, 0.92); }
+    .nav-inner {
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em;
+    }
+    .logo svg { width: 26px; height: 26px; color: var(--accent); }
+    .nav-links {
+      display: flex; align-items: center; gap: 0.15rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.9rem; font-weight: 500;
+      color: rgba(255,255,255,0.78);
+      padding: 0.4rem 0.85rem; border-radius: 999px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+    .nav-actions { display: flex; align-items: center; gap: 0.6rem; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 999px; padding: 0.5rem 1.15rem;
+      font-size: 0.85rem; font-weight: 500; color: #fff;
+      transition: all 0.25s var(--ease);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
+    .btn-buy {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: var(--accent); color: #0a120e;
+      border-radius: 999px; padding: 0.55rem 1.3rem;
+      font-size: 0.9rem; font-weight: 700;
+      box-shadow: 0 4px 18px rgba(168, 240, 0, 0.35);
+      transition: all 0.25s var(--ease);
+    }
+    .btn-buy:hover {
+      background: var(--accent-soft);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(168, 240, 0, 0.45);
+    }
+    .menu-toggle {
+      display: none; background: none; border: 1.5px solid rgba(255,255,255,0.35);
+      border-radius: 8px; padding: 0.4rem 0.6rem; color: #fff; cursor: pointer;
+    }
+
+    /* HERO */
+    .hero {
+      position: relative; min-height: 100vh;
+      display: flex; align-items: center;
+      overflow: hidden;
+    }
+    .orbs { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(100px); opacity: 0.5;
+      animation: float 14s ease-in-out infinite;
+    }
+    .orb-1 {
+      width: 520px; height: 520px; background: #1a7a3a;
+      top: -18%; right: -10%;
+    }
+    .orb-2 {
+      width: 400px; height: 400px; background: #0d5530;
+      bottom: -8%; left: -12%; animation-delay: -5s;
+    }
+    .orb-3 {
+      width: 280px; height: 280px; background: #2a9b4a;
+      top: 42%; left: 38%; opacity: 0.25; animation-delay: -9s;
+    }
+    @keyframes float {
+      0%, 100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(28px,-40px) scale(1.05); }
+      66% { transform: translate(-20px,20px) scale(0.96); }
+    }
+    .hero-content {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      padding: calc(var(--nav-h) + 3rem) 1.5rem 10rem;
+    }
+    .headline {
+      font-size: clamp(2.6rem, 6.5vw, 4.75rem);
+      font-weight: 800; line-height: 1.04;
+      letter-spacing: -0.035em; margin-bottom: 1.2rem;
+    }
+    .headline .green { color: var(--accent); }
+    .rule {
+      width: 48px; height: 4px; background: var(--accent);
+      border-radius: 2px; margin-bottom: 1.35rem;
+    }
+    .lead {
+      font-size: 1.05rem; line-height: 1.65;
+      color: rgba(255,255,255,0.6); max-width: 400px;
+      margin-bottom: 2.25rem;
+    }
+    .explore {
+      display: inline-flex; align-items: center; gap: 0.9rem;
+      transition: transform 0.25s var(--ease);
+    }
+    .explore:hover { transform: translateX(5px); }
+    .explore-circle {
+      width: 50px; height: 50px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem; transition: all 0.25s;
+    }
+    .explore:hover .explore-circle {
+      border-color: var(--accent); color: var(--accent);
+      background: rgba(168, 240, 0, 0.1);
+    }
+    .explore-text { display: flex; flex-direction: column; line-height: 1.25; }
+    .explore-text strong { font-size: 0.95rem; font-weight: 600; }
+    .explore-text span { font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+
+    .wordmark {
+      position: absolute; bottom: -0.1em; left: 0; right: 0;
+      text-align: center;
+      font-size: clamp(4rem, 17.5vw, 14rem);
+      font-weight: 900; letter-spacing: -0.045em; line-height: 0.82;
+      color: rgba(255,255,255,0.07);
+      pointer-events: none; user-select: none;
+      white-space: nowrap; overflow: hidden;
+    }
+
+    .fade-in {
+      opacity: 0; transform: translateY(24px);
+      animation: up 0.9s var(--ease) forwards;
+      animation-delay: var(--d, 0s);
+    }
+    @keyframes up { to { opacity: 1; transform: translateY(0); } }
+
+    /* SECTIONS */
+    .section {
+      background: #f4f7f2; color: #0f2a1f;
+      padding: 5rem 1.5rem;
+    }
+    .section-alt { background: #fff; }
+    .section-inner { max-width: 1000px; margin: 0 auto; }
+    .sec-label {
+      font-size: 0.75rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.14em;
+      color: #2d9b63; margin-bottom: 0.5rem;
+    }
+    .sec-title {
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      margin-bottom: 0.75rem;
+    }
+    .sec-line {
+      width: 52px; height: 4px;
+      background: linear-gradient(90deg, var(--accent), #c8ff4a);
+      border-radius: 2px; margin-bottom: 1.25rem;
+    }
+    .sec-text {
+      font-size: 1.1rem; line-height: 1.7; color: #5a7a6a;
+      max-width: 600px;
+    }
+    .pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+    .pill {
+      background: #e8f8d0; color: #0d3b2a;
+      font-size: 0.85rem; font-weight: 600;
+      padding: 0.4rem 1rem; border-radius: 999px;
+    }
+    .cards {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem; margin-top: 1.5rem;
+    }
+    .card {
+      background: #f4f7f2; border-radius: 16px; padding: 1.5rem;
+    }
+    .card h3 { font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0 0.35rem; }
+    .card p { font-size: 0.95rem; color: #5a7a6a; line-height: 1.5; }
+    .card-icon { font-size: 1.5rem; }
+
+    .cta {
+      background: linear-gradient(160deg, #0d3b2a 0%, #070f0b 100%);
+      color: #fff; text-align: center; padding: 5rem 1.5rem;
+    }
+    .cta h2 {
+      font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+      font-weight: 800; margin-bottom: 0.6rem;
+    }
+    .cta p { color: rgba(255,255,255,0.55); margin-bottom: 1.75rem; font-size: 1.05rem; }
+
+    footer {
+      background: #070f0b; color: rgba(255,255,255,0.5);
+      padding: 2rem 1.5rem; text-align: center; font-size: 0.9rem;
+      border-top: 1px solid rgba(168,240,0,0.08);
+    }
+    footer strong { color: #fff; }
+
+    @media (max-width: 900px) {
+      .nav-links, .nav-actions .btn-outline { display: none; }
+      .menu-toggle { display: block; }
+      .nav.open .nav-links {
+        display: flex; flex-direction: column;
+        position: absolute; top: var(--nav-h); left: 0; right: 0;
+        background: rgba(7,15,11,0.98); padding: 1rem;
+      }
+      .nav.open .nav-actions .btn-outline { display: inline-flex; }
+      .hero-content { padding-bottom: 6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.32L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-2 2-10 2-15 6z"/></svg>
+      Tropivalle
+    </a>
+    <button class="menu-toggle" id="menuBtn" aria-label="Menú">☰</button>
+    <ul class="nav-links">
+      <li><a href="#tienda">Nuestros jugos</a></li>
+      <li><a href="#nosotros">Nosotros</a></li>
+      <li><a href="#ingredientes">Ingredientes</a></li>
+      <li><a href="#sostenibilidad">Sostenibilidad</a></li>
+      <li><a href="#tienda">Tienda</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="#tienda" class="btn-outline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.32L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-2 2-10 2-15 6z"/></svg>
+        Conoce nuestros jugos
+      </a>
+      <a href="#tienda" class="btn-buy">Comprar ahora →</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="hero-content">
+    <h1 class="headline fade-in" style="--d:0.1s">
+      Refrescos naturales<br>
+      que cruzan el<br>
+      <span class="green">sabor con la vida</span>
+    </h1>
+    <div class="rule fade-in" style="--d:0.25s"></div>
+    <p class="lead fade-in" style="--d:0.35s">
+      Jugos naturales, hechos con fruta real.<br>
+      Sin conservadores. Solo sabor que te conecta.
+    </p>
+    <a href="#tienda" class="explore fade-in" style="--d:0.5s">
+      <span class="explore-circle">↗</span>
+      <span class="explore-text">
+        <strong>Explora los sabores</strong>
+        <span>100% naturales</span>
+      </span>
+    </a>
+  </div>
+  <div class="wordmark">TROPIVALLE</div>
+</section>
+
+<section class="section" id="nosotros">
+  <div class="section-inner">
+    <p class="sec-label">Nosotros</p>
+    <h2 class="sec-title">Del valle a tu mesa</h2>
+    <div class="sec-line"></div>
+    <p class="sec-text">
+      En Tropivalle elaboramos jugos y refrescos naturales con fruta fresca del valle.
+      Sin azúcares añadidos artificiales, sin colorantes y con todo el sabor de lo auténtico.
+    </p>
+    <div class="pills">
+      <span class="pill">100% natural</span>
+      <span class="pill">Sin conservantes</span>
+      <span class="pill">Fruta real</span>
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="ingredientes">
+  <div class="section-inner">
+    <p class="sec-label">Ingredientes</p>
+    <h2 class="sec-title">Solo lo esencial</h2>
+    <div class="sec-line"></div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">💧</div>
+        <h3>Fruta del valle</h3>
+        <p>Seleccionada en su punto de madurez para máximo sabor.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">✓</div>
+        <h3>Sin aditivos</h3>
+        <p>Cero colorantes, conservadores ni azúcares artificiales.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">♻</div>
+        <h3>Empaque responsable</h3>
+        <p>Botellas individuales y packs de 12 para el día a día.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="sostenibilidad">
+  <div class="section-inner">
+    <p class="sec-label">Sostenibilidad</p>
+    <h2 class="sec-title">Cuidamos el origen</h2>
+    <div class="sec-line"></div>
+    <p class="sec-text">
+      Trabajamos con productores locales y procesos que respetan el entorno.
+      Cada botella es un pequeño ritual de frescura y compromiso con el valle.
+    </p>
+  </div>
+</section>
+
+<section class="cta" id="tienda">
+  <h2>Descubre el sabor del valle</h2>
+  <p>Botellas individuales · Packs de 12 · 100% natural</p>
+  <a href="#" class="btn-buy" style="font-size:1rem;padding:0.75rem 1.75rem">Comprar ahora →</a>
+</section>
+
+<footer>
+  <strong>Tropivalle</strong> — Jugos naturales del valle · &copy; 2026
+</footer>
+
+<script>
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 40), { passive: true });
+  document.getElementById('menuBtn').addEventListener('click', () => nav.classList.toggle('open'));
+</script>
+</body>
+</html>

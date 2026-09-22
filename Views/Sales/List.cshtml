@@ -1,0 +1,91 @@
+@model IEnumerable<Sale>
+@{
+    ViewData["Title"] = "Listado de ventas";
+    var period = (string)(ViewBag.Period ?? "mensual");
+}
+<div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+        <h1 class="mb-1"><i class="bi bi-receipt me-2"></i>Listado de ventas</h1>
+        <div class="section-divider"></div>
+        <p class="subtitle mb-0">Periodo: <strong>@period</strong></p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Report" asp-route-period="@period" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-text me-1"></i>Ver reporte
+        </a>
+        <a asp-action="ExportPdf" asp-route-period="@period" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Descargar PDF
+        </a>
+        <a asp-action="Index" asp-route-period="@period" class="btn btn-outline-primary">Gráfica</a>
+    </div>
+</div>
+
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a asp-action="List" asp-route-period="semanal" class="btn btn-sm btn-outline-success @(period=="semanal"?"active":"")">Semanal</a>
+    <a asp-action="List" asp-route-period="mensual" class="btn btn-sm btn-outline-success @(period=="mensual"?"active":"")">Mensual</a>
+    <a asp-action="List" asp-route-period="anual" class="btn btn-sm btn-outline-success @(period=="anual"?"active":"")">Anual</a>
+
+    @if (Model.Any())
+    {
+        <form asp-action="ClearPeriod" method="post" class="ms-auto"
+              onsubmit="return confirm('¿Borrar TODAS las ventas del periodo @period? Esta acción no se puede deshacer.');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="period" value="@period" />
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash me-1"></i>Borrar todas del periodo
+            </button>
+        </form>
+    }
+</div>
+
+<div class="table-responsive card border-0 shadow-sm">
+    <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Fecha</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th class="text-end">Cant.</th>
+                <th class="text-end">P. unit.</th>
+                <th class="text-end">Total</th>
+                <th class="text-center" style="width:90px;">Acción</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.Any())
+        {
+            <tr><td colspan="7" class="text-center text-muted py-4">Sin ventas en este periodo.</td></tr>
+        }
+        else
+        {
+            foreach (var s in Model)
+            {
+                <tr>
+                    <td>@s.SoldAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@s.ProductName</td>
+                    <td><span class="badge badge-pack">@(s.Category ?? "—")</span></td>
+                    <td class="text-end">@s.Quantity</td>
+                    <td class="text-end">@s.UnitPrice.ToString("N2")</td>
+                    <td class="text-end fw-semibold">@s.TotalAmount.ToString("N2") BOB</td>
+                    <td class="text-center">
+                        <form asp-action="Delete" method="post" class="d-inline"
+                              onsubmit="return confirm('¿Eliminar esta venta de @s.ProductName?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@s.Id" />
+                            <input type="hidden" name="period" value="@period" />
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
