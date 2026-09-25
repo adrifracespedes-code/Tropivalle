@@ -1,0 +1,117 @@
+/* Asistente de voz TropiValle */
+.tv-asistente {
+  position: fixed;
+  right: 1rem;
+  bottom: 1.25rem;
+  z-index: 1100;
+  font-family: Inter, system-ui, sans-serif;
+}
+.tv-asistente-fab {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(145deg, #2d9b63, #0d3b2a);
+  color: #9af00a;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), 0 0 0 3px rgba(154, 240, 10, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.tv-asistente-fab:hover { transform: scale(1.06); color: #fff; }
+
+.tv-asistente-panel {
+  display: none;
+  width: min(320px, calc(100vw - 2rem));
+  margin-bottom: 0.75rem;
+  background: rgba(10, 18, 14, 0.96);
+  border: 1px solid rgba(154, 240, 10, 0.2);
+  border-radius: 16px;
+  padding: 1rem;
+  color: #fff;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.tv-asistente.open .tv-asistente-panel { display: block; }
+
+.tv-asistente-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
+}
+.tv-asistente-header strong { display: block; font-size: 0.95rem; }
+.tv-asistente-header small { color: rgba(255, 255, 255, 0.55); font-size: 0.75rem; }
+.tv-asistente-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(154, 240, 10, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tv-asistente-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.tv-asistente-hint {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 0.5rem;
+}
+.tv-asistente-hint em { color: #9af00a; font-style: normal; }
+.tv-asistente-status {
+  min-height: 1.25rem;
+  font-size: 0.8rem;
+  color: #b8f54a;
+  margin-bottom: 0.75rem;
+}
+.tv-asistente-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.tv-asistente-mic {
+  flex: 1;
+  border: none;
+  border-radius: 999px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  background: #9af00a;
+  color: #0a120e;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+.tv-asistente-mic.listening {
+  background: #c0392b;
+  color: #fff;
+  animation: tv-pulse 1s ease infinite;
+}
+@keyframes tv-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.tv-asistente-help {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+@media print {
+  .tv-asistente { display: none !important; }
+}

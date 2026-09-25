@@ -11,7 +11,7 @@ using QuestPDF.Infrastructure;
 namespace EcommerceApp.Controllers;
 
 [Authorize(Roles = "Admin")]
-public class SalesController(ApplicationDbContext context) : Controller
+public class SalesController(ApplicationDbContext context, IWebHostEnvironment env) : Controller
 {
     static SalesController()
     {
@@ -182,56 +182,66 @@ public class SalesController(ApplicationDbContext context) : Controller
             _ => "Mensual"
         };
 
+        var logoPath = Path.Combine(env.WebRootPath, "images", "logo-tropivalle.png");
+        var hasLogo = System.IO.File.Exists(logoPath);
+
         var bytes = Document.Create(container =>
         {
             container.Page(page =>
             {
-                page.Margin(40);
+                page.Margin(36);
                 page.Size(PageSizes.A4);
                 page.DefaultTextStyle(x => x.FontSize(10));
 
                 page.Header().Column(col =>
                 {
-                    col.Item().Text("INDUSTRIAS ALIMENTICIAS TROPIVALLE")
-                        .Bold().FontSize(14).FontColor(Colors.Green.Darken3);
-                    col.Item().Text("Reporte de ventas — " + periodLabel)
-                        .FontSize(12).FontColor(Colors.Grey.Darken2);
-                    col.Item().Text($"Periodo: {from.ToLocalTime():dd/MM/yyyy} — {to.ToLocalTime().AddSeconds(-1):dd/MM/yyyy}")
-                        .FontSize(9).FontColor(Colors.Grey.Medium);
-                    col.Item().Text($"Generado: {DateTime.Now:dd/MM/yyyy HH:mm}")
-                        .FontSize(9).FontColor(Colors.Grey.Medium);
-                    col.Item().PaddingVertical(8).LineHorizontal(1).LineColor(Colors.Green.Medium);
+                    if (hasLogo)
+                    {
+                        col.Item().AlignCenter().Height(56).Image(logoPath).FitHeight();
+                        col.Item().PaddingTop(4);
+                    }
+                    col.Item().AlignCenter().Text("INDUSTRIAS ALIMENTICIAS TROPIVALLE")
+                        .Bold().FontSize(13).FontColor(Colors.Green.Darken3);
+                    col.Item().AlignCenter().Text("Reporte de ventas — " + periodLabel)
+                        .FontSize(11).FontColor(Colors.Grey.Darken2);
+                    col.Item().AlignCenter().Text(
+                            $"Periodo: {from.ToLocalTime():dd/MM/yyyy} — {to.ToLocalTime().AddSeconds(-1):dd/MM/yyyy}  ·  Generado: {DateTime.Now:dd/MM/yyyy HH:mm}")
+                        .FontSize(8).FontColor(Colors.Grey.Medium);
+                    col.Item().PaddingVertical(8).LineHorizontal(1.5f).LineColor(Colors.Green.Medium);
                 });
 
                 page.Content().Column(col =>
                 {
-                    col.Item().PaddingBottom(10).Row(row =>
+                    col.Item().PaddingBottom(12).Row(row =>
                     {
-                        row.RelativeItem().Background(Colors.Grey.Lighten3).Padding(8).Column(c =>
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2)
+                            .Background(Colors.Grey.Lighten4).Padding(10).Column(c =>
                         {
-                            c.Item().Text("Total vendido").FontSize(8);
-                            c.Item().Text($"{total:N2} BOB").Bold().FontSize(14);
+                            c.Item().Text("Total vendido").FontSize(8).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text($"{total:N2} BOB").Bold().FontSize(14).FontColor(Colors.Green.Darken3);
                         });
-                        row.ConstantItem(12);
-                        row.RelativeItem().Background(Colors.Grey.Lighten3).Padding(8).Column(c =>
+                        row.ConstantItem(10);
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2)
+                            .Background(Colors.Grey.Lighten4).Padding(10).Column(c =>
                         {
-                            c.Item().Text("Unidades").FontSize(8);
-                            c.Item().Text($"{units}").Bold().FontSize(14);
+                            c.Item().Text("Unidades").FontSize(8).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text($"{units}").Bold().FontSize(14).FontColor(Colors.Green.Darken3);
                         });
-                        row.ConstantItem(12);
-                        row.RelativeItem().Background(Colors.Grey.Lighten3).Padding(8).Column(c =>
+                        row.ConstantItem(10);
+                        row.RelativeItem().Border(1).BorderColor(Colors.Grey.Lighten2)
+                            .Background(Colors.Grey.Lighten4).Padding(10).Column(c =>
                         {
-                            c.Item().Text("Registros").FontSize(8);
-                            c.Item().Text($"{sales.Count}").Bold().FontSize(14);
+                            c.Item().Text("Registros").FontSize(8).FontColor(Colors.Grey.Darken1);
+                            c.Item().Text($"{sales.Count}").Bold().FontSize(14).FontColor(Colors.Green.Darken3);
                         });
                     });
 
-                    col.Item().PaddingTop(10).Table(table =>
+                    col.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.RelativeColumn(1.4f);
-                            columns.RelativeColumn(2.2f);
+                            columns.RelativeColumn(1.5f);
+                            columns.RelativeColumn(2.3f);
                             columns.RelativeColumn(1.6f);
                             columns.RelativeColumn(0.7f);
                             columns.RelativeColumn(1f);
@@ -272,20 +282,34 @@ public class SalesController(ApplicationDbContext context) : Controller
                             table.Cell().Background(bg).Padding(4)
                                 .AlignRight().Text(s.TotalAmount.ToString("N2")).FontSize(8);
                         }
+
+                        if (sales.Count > 0)
+                        {
+                            table.Cell().ColumnSpan(3).Background(Colors.Green.Lighten4).Padding(5)
+                                .Text("TOTAL").Bold().FontSize(9);
+                            table.Cell().Background(Colors.Green.Lighten4).Padding(5)
+                                .AlignRight().Text(units.ToString()).Bold().FontSize(9);
+                            table.Cell().Background(Colors.Green.Lighten4).Padding(5).Text("");
+                            table.Cell().Background(Colors.Green.Lighten4).Padding(5)
+                                .AlignRight().Text($"{total:N2} BOB").Bold().FontSize(9);
+                        }
                     });
 
                     if (sales.Count == 0)
                     {
-                        col.Item().PaddingTop(20).AlignCenter()
+                        col.Item().PaddingTop(24).AlignCenter()
                             .Text("No hay ventas registradas en este periodo.")
                             .FontColor(Colors.Grey.Medium);
                     }
+
+                    col.Item().PaddingTop(16).AlignCenter()
+                        .Text("Calle Salazar No. 1691 · Zona La Chimba · Cochabamba, Bolivia · +591-7-595-0776")
+                        .FontSize(8).FontColor(Colors.Grey.Medium);
                 });
 
                 page.Footer().AlignCenter().Text(txt =>
                 {
-                    txt.Span("TropiValle · Cochabamba, Bolivia · ").FontSize(8).FontColor(Colors.Grey.Medium);
-                    txt.Span("Página ").FontSize(8).FontColor(Colors.Grey.Medium);
+                    txt.Span("TropiValle · Hecho en Bolivia  ·  Página ").FontSize(8).FontColor(Colors.Grey.Medium);
                     txt.CurrentPageNumber().FontSize(8).FontColor(Colors.Grey.Medium);
                     txt.Span(" / ").FontSize(8).FontColor(Colors.Grey.Medium);
                     txt.TotalPages().FontSize(8).FontColor(Colors.Grey.Medium);

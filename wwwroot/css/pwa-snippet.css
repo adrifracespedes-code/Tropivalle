@@ -1,0 +1,3 @@
+/* Opcional: si quieres estilos extra del botón Instalar */
+#pwaInstallBtn { align-items: center; }
+@media print { #pwaInstallBtn { display: none !important; } }

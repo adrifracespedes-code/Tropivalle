@@ -754,3 +754,155 @@ footer a { color: var(--tv-accent); }
   border-radius: 14px;
   border-left: 4px solid var(--tv-green, #1a6b45) !important;
 }
+
+
+/* ========== Nav mejorado: marca + activo + Contacto ========== */
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(154, 240, 10, 0.2), rgba(26, 107, 69, 0.35));
+  border: 1px solid rgba(154, 240, 10, 0.35);
+  color: var(--tv-accent);
+  font-size: 1.05rem;
+  box-shadow: 0 0 16px rgba(154, 240, 10, 0.15);
+}
+
+.nav-item-link.active {
+  color: #0a120e !important;
+  background: var(--tv-accent) !important;
+  font-weight: 600;
+  box-shadow: 0 2px 12px rgba(154, 240, 10, 0.3);
+}
+
+.nav-item-link.active:hover {
+  color: #0a120e !important;
+  background: #b8f54a !important;
+}
+
+.dropdown-menu-tv {
+  background: #0f1a14;
+  border-radius: 14px !important;
+  padding: 0.5rem;
+  min-width: 260px;
+  margin-top: 0.5rem !important;
+  border: 1px solid rgba(154, 240, 10, 0.12) !important;
+}
+
+.dropdown-menu-tv .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  white-space: normal;
+}
+
+.dropdown-menu-tv .dropdown-item:hover,
+.dropdown-menu-tv .dropdown-item:focus {
+  background: rgba(154, 240, 10, 0.12);
+  color: #fff;
+}
+
+.dropdown-menu-tv .dropdown-item strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dropdown-menu-tv .dropdown-item small {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 0.75rem;
+}
+
+.dropdown-menu-tv .dropdown-divider {
+  border-color: rgba(255, 255, 255, 0.08);
+  margin: 0.35rem 0;
+}
+
+.dd-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(26, 107, 69, 0.5);
+  color: var(--tv-accent);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.dd-icon.wa {
+  background: rgba(37, 211, 102, 0.2);
+  color: #25d366;
+}
+
+.dd-icon.map {
+  background: rgba(66, 133, 244, 0.2);
+  color: #8ab4f8;
+}
+
+.nav-user {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.nav-user-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navbar-toggler-icon {
+  filter: invert(1);
+}
+
+@media (max-width: 991.98px) {
+  .nav-pills-tv {
+    padding: 0.75rem 0;
+    gap: 0.25rem !important;
+  }
+  .nav-item-link {
+    display: block;
+    padding: 0.65rem 1rem !important;
+  }
+  .dropdown-menu-tv {
+    background: rgba(15, 26, 20, 0.98);
+  }
+}
+
+
+/* Logo oficial TropiValle en navbar */
+.navbar-brand .brand-logo {
+  height: 44px;
+  width: auto;
+  max-width: 160px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35));
+  transition: transform 0.2s ease, filter 0.2s;
+}
+.navbar-brand:hover .brand-logo {
+  transform: scale(1.04);
+  filter: drop-shadow(0 2px 12px rgba(154, 240, 10, 0.35));
+}
+@media (max-width: 575.98px) {
+  .navbar-brand .brand-logo {
+    height: 36px;
+    max-width: 120px;
+  }
+}
+
+.footer-logo {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+}
