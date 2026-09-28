@@ -1,0 +1,10 @@
+@model CustomerOrder
+@{
+    ViewData["Title"] = "Pago cancelado";
+}
+<div class="text-center py-5">
+    <h1 style="color:var(--tv-green-dark)">Pago cancelado</h1>
+    <p class="text-muted">El pedido <strong>@Model.OrderCode</strong> quedó cancelado. Puedes intentar de nuevo cuando quieras.</p>
+    <a asp-controller="Checkout" asp-action="Index" asp-route-productId="@Model.ProductId" class="btn btn-primary">Reintentar</a>
+    <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary">Catálogo</a>
+</div>

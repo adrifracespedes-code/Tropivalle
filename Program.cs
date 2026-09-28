@@ -3,6 +3,7 @@ using EcommerceApp.Models;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,8 +25,9 @@ if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCas
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
+    // Evita el error PendingModelChangesWarning al arrancar
     options.ConfigureWarnings(w =>
-        w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -47,7 +49,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
     options.SlidingExpiration = true;
-    // Detrás del proxy de Render
     options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
@@ -61,6 +62,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddHttpClient("stripe");
+builder.Services.AddScoped<EcommerceApp.Services.StripeCheckoutService>();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -68,12 +72,9 @@ app.UseForwardedHeaders();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // HSTS solo si Render termina TLS (sí lo hace)
     app.UseHsts();
 }
 
-// En Render el contenedor escucha HTTP; el proxy maneja HTTPS.
-// UseHttpsRedirection puede romper health checks si no hay HTTPS local.
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -94,7 +95,6 @@ app.Run();
 
 static string ConvertPostgresUrl(string url)
 {
-    // postgres://user:pass@host:port/db
     var uri = new Uri(url);
     var userInfo = uri.UserInfo.Split(':', 2);
     var user = Uri.UnescapeDataString(userInfo[0]);
@@ -114,21 +114,46 @@ static class DatabaseInitializer
         {
             await db.Database.MigrateAsync();
 
-        // Tabla Sales (gráfica) si aún no existe — compatible con Supabase
-        await db.Database.ExecuteSqlRawAsync("""
-CREATE TABLE IF NOT EXISTS "Sales" (
-    "Id" SERIAL PRIMARY KEY,
-    "ProductId" integer NOT NULL,
-    "ProductName" character varying(150) NOT NULL,
-    "Category" character varying(100) NULL,
-    "Quantity" integer NOT NULL,
-    "UnitPrice" numeric(18,2) NOT NULL,
-    "TotalAmount" numeric(18,2) NOT NULL,
-    "SoldAt" timestamp with time zone NOT NULL,
-    "Notes" character varying(300) NULL
-);
-CREATE INDEX IF NOT EXISTS "IX_Sales_SoldAt" ON "Sales" ("SoldAt");
-""");
+            // Tabla Sales (gráfica) si aún no existe
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "Sales" (
+                    "Id" SERIAL PRIMARY KEY,
+                    "ProductId" integer NOT NULL,
+                    "ProductName" character varying(150) NOT NULL,
+                    "Category" character varying(100) NULL,
+                    "Quantity" integer NOT NULL,
+                    "UnitPrice" numeric(18,2) NOT NULL,
+                    "TotalAmount" numeric(18,2) NOT NULL,
+                    "SoldAt" timestamp with time zone NOT NULL,
+                    "Notes" character varying(300) NULL
+                );
+                CREATE INDEX IF NOT EXISTS "IX_Sales_SoldAt" ON "Sales" ("SoldAt");
+                """);
+
+            await db.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "CustomerOrders" (
+                    "Id" SERIAL PRIMARY KEY,
+                    "OrderCode" character varying(40) NOT NULL,
+                    "ProductId" integer NOT NULL,
+                    "ProductName" character varying(150) NOT NULL,
+                    "Category" character varying(100) NULL,
+                    "Quantity" integer NOT NULL,
+                    "UnitPrice" numeric(18,2) NOT NULL,
+                    "TotalAmount" numeric(18,2) NOT NULL,
+                    "CustomerName" character varying(120) NOT NULL,
+                    "CustomerPhone" character varying(30) NULL,
+                    "CustomerEmail" character varying(120) NULL,
+                    "PaymentMethod" character varying(30) NOT NULL,
+                    "Status" character varying(20) NOT NULL,
+                    "StripeSessionId" character varying(120) NULL,
+                    "StripePaymentIntentId" character varying(120) NULL,
+                    "Notes" character varying(400) NULL,
+                    "CreatedAt" timestamp with time zone NOT NULL,
+                    "PaidAt" timestamp with time zone NULL
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS "IX_CustomerOrders_OrderCode" ON "CustomerOrders" ("OrderCode");
+                CREATE INDEX IF NOT EXISTS "IX_CustomerOrders_CreatedAt" ON "CustomerOrders" ("CreatedAt");
+                """);
         }
         catch (Exception ex)
         {
@@ -172,7 +197,7 @@ CREATE INDEX IF NOT EXISTS "IX_Sales_SoldAt" ON "Sales" ("SoldAt");
                 await userManager.AddToRoleAsync(admin, "Admin");
         }
 
-        // Si hay productos viejos (Individual/Pack) o la tabla está vacía, cargar catálogo real
+        // Catálogo real si está vacío o hay productos viejos
         var hasLegacy = await db.Products.AnyAsync(p =>
             p.Category == "Individual" || p.Category == "Pack x12" ||
             (p.Name != null && p.Name.Contains("Jugo de")));

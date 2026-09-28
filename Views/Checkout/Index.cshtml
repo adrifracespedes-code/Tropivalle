@@ -1,0 +1,138 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Pagar pedido";
+    var stripeOn = ViewBag.StripeEnabled as bool? == true;
+    var pay = ViewBag.Payment as EcommerceApp.Services.PaymentOptions;
+}
+<div class="page-header">
+    <h1 class="mb-1" style="color: var(--tv-green-dark);">Finalizar compra</h1>
+    <div class="section-divider"></div>
+    <p class="text-muted">Pago seguro · TropiValle Cochabamba</p>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card product-card p-3">
+            @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.ProductName" class="img-fluid rounded mb-3"
+                     style="max-height:220px;object-fit:contain;width:100%;background:#fff;" />
+            }
+            <h5 class="fw-bold" style="color:var(--tv-green-dark)">@Model.ProductName</h5>
+            <p class="mb-1">Precio unitario: <strong>@Model.UnitPrice.ToString("N2") BOB</strong></p>
+            <p class="mb-0 text-muted small">El total se calcula según la cantidad.</p>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card product-card p-4">
+            <form asp-action="Index" method="post">
+                <input type="hidden" asp-for="ProductId" />
+                <input type="hidden" asp-for="ProductName" />
+                <input type="hidden" asp-for="UnitPrice" />
+                <input type="hidden" asp-for="ImageUrl" />
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Quantity" class="form-label"></label>
+                    <input asp-for="Quantity" class="form-control" type="number" min="1" max="500" id="qtyInput" />
+                    <span asp-validation-for="Quantity" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CustomerName" class="form-label"></label>
+                    <input asp-for="CustomerName" class="form-control" placeholder="Tu nombre" />
+                    <span asp-validation-for="CustomerName" class="text-danger"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CustomerPhone" class="form-label"></label>
+                        <input asp-for="CustomerPhone" class="form-control" placeholder="7595..." />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CustomerEmail" class="form-label"></label>
+                        <input asp-for="CustomerEmail" class="form-control" placeholder="opcional@correo.com" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Dirección, horario, sabor..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Método de pago</label>
+                    <div class="d-flex flex-column gap-2">
+                        <label class="border rounded p-3 d-flex align-items-start gap-2" style="cursor:pointer;border-color:var(--tv-green-mid)!important;background:rgba(26,107,69,0.06)">
+                            <input type="radio" asp-for="PaymentMethod" value="Registro" class="mt-1" checked />
+                            <span>
+                                <strong><i class="bi bi-journal-check me-1"></i>Registrar pedido en la página</strong><br />
+                                <small class="text-muted">Funciona ya: anota el pedido y la venta en el sistema (sin cobro online)</small>
+                            </span>
+                        </label>
+                        <label class="border rounded p-3 d-flex align-items-start gap-2" style="cursor:pointer">
+                            <input type="radio" asp-for="PaymentMethod" value="Transfer" class="mt-1" />
+                            <span>
+                                <strong><i class="bi bi-bank me-1"></i>Transferencia / QR bancario</strong><br />
+                                <small class="text-muted">Muestra datos de cuenta; admin confirma después</small>
+                            </span>
+                        </label>
+                        <label class="border rounded p-3 d-flex align-items-start gap-2" style="cursor:pointer">
+                            <input type="radio" asp-for="PaymentMethod" value="WhatsApp" class="mt-1" />
+                            <span>
+                                <strong><i class="bi bi-whatsapp me-1"></i>Pedir por WhatsApp</strong><br />
+                                <small class="text-muted">Abre el chat con el pedido escrito</small>
+                            </span>
+                        </label>
+                        @if (stripeOn)
+                        {
+                            <label class="border rounded p-3 d-flex align-items-start gap-2" style="cursor:pointer">
+                                <input type="radio" asp-for="PaymentMethod" value="Stripe" class="mt-1" />
+                                <span>
+                                    <strong><i class="bi bi-credit-card me-1"></i>Tarjeta (Stripe)</strong><br />
+                                    <small class="text-muted">Solo si configuraste Stripe · cobro real</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                </div>
+
+                <div class="alert alert-light border d-flex justify-content-between align-items-center">
+                    <span>Total estimado</span>
+                    <strong id="totalLabel" style="font-size:1.25rem;color:var(--tv-green-dark)">
+                        @((Model.UnitPrice * Model.Quantity).ToString("N2")) BOB
+                    </strong>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Confirmar pedido <i class="bi bi-arrow-right ms-1"></i>
+                </button>
+                <a asp-controller="Products" asp-action="Index" class="btn btn-link w-100 mt-2">Volver al catálogo</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var price = @Model.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var qty = document.getElementById('qtyInput');
+            var label = document.getElementById('totalLabel');
+            function upd() {
+                var q = parseInt(qty.value || '1', 10);
+                if (isNaN(q) || q < 1) q = 1;
+                var t = (price * q).toFixed(2);
+                label.textContent = t.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + ' BOB';
+            }
+            qty.addEventListener('input', upd);
+        })();
+    </script>
+}

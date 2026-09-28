@@ -17,6 +17,9 @@
         <p class="text-muted small">Publicado: @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</p>
 
         <div class="d-flex gap-2 mt-4">
+            <a asp-controller="Checkout" asp-action="Index" asp-route-productId="@Model.Id" class="btn btn-primary">
+                <i class="bi bi-bag-check me-1"></i>Comprar ahora
+            </a>
             <a asp-action="Index" class="btn btn-outline-primary">
                 <i class="bi bi-arrow-left me-1"></i>Volver al catálogo
             </a>

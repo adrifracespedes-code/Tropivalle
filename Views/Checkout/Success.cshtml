@@ -1,0 +1,18 @@
+@model CustomerOrder
+@{
+    ViewData["Title"] = "Pago recibido";
+}
+<div class="text-center py-5">
+    <div class="mb-3" style="font-size:3rem;color:var(--tv-green-mid)">✓</div>
+    <h1 style="color:var(--tv-green-dark)">¡Pedido registrado!</h1>
+    <p class="text-muted small">Quedó anotado en el sistema de TropiValle.</p>
+    <p class="lead text-muted">Pedido <strong>@Model.OrderCode</strong></p>
+    <p>@Model.ProductName × @Model.Quantity</p>
+    <p class="fs-4 fw-bold">@Model.TotalAmount.ToString("N2") BOB</p>
+    <p>Estado: <span class="badge @(Model.Status == "Paid" ? "bg-success" : "bg-warning text-dark")">@Model.Status</span></p>
+    @if (Model.Status != "Paid")
+    {
+        <p class="small text-muted">Si pagaste con transferencia, te confirmaremos cuando verifiquemos el depósito.</p>
+    }
+    <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">Volver al catálogo</a>
+</div>

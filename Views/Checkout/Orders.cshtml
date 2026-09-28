@@ -1,0 +1,67 @@
+@model IEnumerable<CustomerOrder>
+@{
+    ViewData["Title"] = "Pedidos web";
+}
+<div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <h1 class="mb-1" style="color: var(--tv-green-dark);">Pedidos de la web</h1>
+        <div class="section-divider"></div>
+    </div>
+</div>
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+<div class="table-responsive card product-card p-2">
+    <table class="table table-hover align-middle mb-0">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Total</th>
+                <th>Método</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var o in Model)
+        {
+            <tr>
+                <td><code>@o.OrderCode</code></td>
+                <td>
+                    @o.CustomerName
+                    @if (!string.IsNullOrEmpty(o.CustomerPhone))
+                    {
+                        <br /><small class="text-muted">@o.CustomerPhone</small>
+                    }
+                </td>
+                <td>@o.ProductName × @o.Quantity</td>
+                <td>@o.TotalAmount.ToString("N2") BOB</td>
+                <td>@o.PaymentMethod</td>
+                <td>
+                    <span class="badge @(o.Status == "Paid" ? "bg-success" : o.Status == "Pending" ? "bg-warning text-dark" : "bg-secondary")">
+                        @o.Status
+                    </span>
+                </td>
+                <td>@o.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                <td>
+                    @if (o.Status == "Pending")
+                    {
+                        <form asp-action="MarkPaid" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="code" value="@o.OrderCode" />
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('¿Marcar @o.OrderCode como pagado?');">
+                                Marcar pagado
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

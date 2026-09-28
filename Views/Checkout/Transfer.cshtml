@@ -1,0 +1,55 @@
+@model CustomerOrder
+@{
+    ViewData["Title"] = "Transferencia bancaria";
+    var pay = ViewBag.Payment as EcommerceApp.Services.PaymentOptions;
+}
+<div class="page-header">
+    <h1 class="mb-1" style="color: var(--tv-green-dark);">Transferencia / QR</h1>
+    <div class="section-divider"></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card product-card p-4">
+            <p class="text-muted mb-1">Pedido</p>
+            <h4 class="fw-bold">@Model.OrderCode</h4>
+            <hr />
+            <p><strong>@Model.ProductName</strong> × @Model.Quantity</p>
+            <p class="mb-1">Cliente: @Model.CustomerName</p>
+            <p class="fs-4 fw-bold" style="color:var(--tv-green-dark)">
+                Total a pagar: @Model.TotalAmount.ToString("N2") BOB
+            </p>
+            <p class="small text-muted">Estado: <span class="badge bg-warning text-dark">@Model.Status</span></p>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card product-card p-4">
+            <h5 class="fw-bold mb-3">Datos para depositar</h5>
+            <ul class="list-unstyled mb-3">
+                <li class="mb-2"><strong>Banco:</strong> @(pay?.BankName)</li>
+                <li class="mb-2"><strong>Titular:</strong> @(pay?.AccountHolder)</li>
+                <li class="mb-2"><strong>Cuenta:</strong> @(string.IsNullOrEmpty(pay?.AccountNumber) ? "(configurar en appsettings)" : pay!.AccountNumber)</li>
+                <li class="mb-2"><strong>Tipo:</strong> @(pay?.AccountType)</li>
+            </ul>
+            @if (!string.IsNullOrEmpty(pay?.QrImageUrl))
+            {
+                <div class="text-center mb-3">
+                    <img src="@pay.QrImageUrl" alt="QR de pago" style="max-width:220px" class="img-fluid rounded border" />
+                    <p class="small text-muted mt-2">Escanea el QR desde tu banca móvil</p>
+                </div>
+            }
+            <div class="alert alert-info small">
+                Al transferir, escribe en la glosa: <strong>@Model.OrderCode</strong>.
+                Luego envíanos el comprobante por WhatsApp para confirmar tu pedido.
+            </div>
+            @{
+                var phone = new string((pay?.WhatsAppNumber ?? "59175950776").Where(char.IsDigit).ToArray());
+                var msg = $"Hola, realicé la transferencia del pedido {Model.OrderCode} por {Model.TotalAmount:N2} BOB. Adjunto comprobante.";
+            }
+            <a class="btn btn-success w-100" href="https://wa.me/@phone?text=@Uri.EscapeDataString(msg)" target="_blank" rel="noopener">
+                <i class="bi bi-whatsapp me-1"></i> Enviar comprobante por WhatsApp
+            </a>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-outline-primary w-100 mt-2">Seguir comprando</a>
+        </div>
+    </div>
+</div>

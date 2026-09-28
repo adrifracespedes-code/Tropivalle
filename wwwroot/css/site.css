@@ -700,9 +700,11 @@ footer a { color: var(--tv-accent); }
 .list-thumb {
   width: 100%;
   height: 110px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   display: block;
-  background: var(--tv-offwhite, #eef3ec);
+  background: #ffffff;
+  padding: 0.35rem;
 }
 
 @media (min-width: 768px) {
