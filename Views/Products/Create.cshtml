@@ -6,24 +6,24 @@
 <div class="page-header">
     <h1 class="mb-1" style="color: var(--tv-green-dark);">Crear producto</h1>
     <div class="section-divider"></div>
-    <p class="text-muted">Agrega un jugo individual o un pack de 12 botellas</p>
+    <p class="text-muted">Agrega un néctar o agua de mesa al catálogo</p>
 </div>
 
 <div class="row">
     <div class="col-md-8 col-lg-7">
         <div class="card product-card p-4">
-            <form asp-action="Create" method="post">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                 <div class="mb-3">
                     <label asp-for="Name" class="form-label"></label>
-                    <input asp-for="Name" class="form-control" placeholder="Ej: Jugo de Naranja Natural" />
+                    <input asp-for="Name" class="form-control" placeholder="Ej: TropiValle 1 Litro Retornable" />
                     <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="Description" class="form-label"></label>
-                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Descripción breve del jugo..."></textarea>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Descripción breve..."></textarea>
                     <span asp-validation-for="Description" class="text-danger"></span>
                 </div>
 
@@ -41,7 +41,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Category" class="form-label">Tipo de presentación</label>
+                    <label asp-for="Category" class="form-label">Categoría</label>
                     <select asp-for="Category" class="form-select">
                         <option value="">— Seleccionar —</option>
                         <option value="Nectar TropiValle">Nectar TropiValle</option>
@@ -50,10 +50,32 @@
                     <span asp-validation-for="Category" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="ImageUrl" class="form-label">URL de imagen</label>
-                    <input asp-for="ImageUrl" class="form-control" placeholder="https://..." />
-                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                <div class="mb-3 p-3 rounded border bg-light">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="bi bi-image me-1"></i>Imagen del producto
+                    </label>
+                    <p class="small text-muted mb-2">Puedes subir un archivo desde tu PC <strong>o</strong> pegar una URL. Si subes archivo, tiene prioridad sobre la URL.</p>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="imageFile">Subir desde la PC</label>
+                        <input type="file" name="imageFile" id="imageFile" class="form-control"
+                               accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" />
+                        <div class="form-text">JPG, PNG, WEBP o GIF · máximo 5 MB</div>
+                    </div>
+
+                    <div class="mb-2 text-center text-muted small">— o —</div>
+
+                    <div class="mb-2">
+                        <label asp-for="ImageUrl" class="form-label">URL de imagen</label>
+                        <input asp-for="ImageUrl" class="form-control" id="ImageUrl"
+                               placeholder="/images/nectar-1l-retornable.jpg o https://..." />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mt-2">
+                        <img id="imagePreview" src="" alt="Vista previa" class="img-thumbnail d-none"
+                             style="max-height: 180px; object-fit: contain;" />
+                    </div>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -69,4 +91,36 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var fileInput = document.getElementById('imageFile');
+            var urlInput = document.getElementById('ImageUrl');
+            var preview = document.getElementById('imagePreview');
+
+            function showPreview(src) {
+                if (!src) {
+                    preview.classList.add('d-none');
+                    preview.removeAttribute('src');
+                    return;
+                }
+                preview.src = src;
+                preview.classList.remove('d-none');
+            }
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function () {
+                    var f = fileInput.files && fileInput.files[0];
+                    if (f) showPreview(URL.createObjectURL(f));
+                    else showPreview(urlInput && urlInput.value);
+                });
+            }
+            if (urlInput) {
+                urlInput.addEventListener('input', function () {
+                    if (fileInput && fileInput.files && fileInput.files.length) return;
+                    showPreview(urlInput.value.trim());
+                });
+                if (urlInput.value) showPreview(urlInput.value.trim());
+            }
+        })();
+    </script>
 }

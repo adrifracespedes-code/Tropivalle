@@ -1,6 +1,7 @@
 @model Product
 @{
     ViewData["Title"] = "Editar producto";
+    var currentImg = Model?.ImageUrl;
 }
 
 <div class="page-header">
@@ -11,7 +12,7 @@
 <div class="row">
     <div class="col-md-8 col-lg-7">
         <div class="card product-card p-4">
-            <form asp-action="Edit" method="post">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="CreatedAt" />
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
@@ -42,7 +43,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label asp-for="Category" class="form-label">Tipo de presentación</label>
+                    <label asp-for="Category" class="form-label">Categoría</label>
                     <select asp-for="Category" class="form-select">
                         <option value="">— Seleccionar —</option>
                         <option value="Nectar TropiValle">Nectar TropiValle</option>
@@ -51,10 +52,45 @@
                     <span asp-validation-for="Category" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="ImageUrl" class="form-label">URL de imagen</label>
-                    <input asp-for="ImageUrl" class="form-control" />
-                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                <div class="mb-3 p-3 rounded border bg-light">
+                    <label class="form-label fw-semibold mb-2">
+                        <i class="bi bi-image me-1"></i>Imagen del producto
+                    </label>
+                    <p class="small text-muted mb-2">
+                        Sube un archivo desde la PC <strong>o</strong> cambia la URL.
+                        Si subes archivo, reemplaza la imagen actual. Si dejas ambos vacíos, se mantiene la actual.
+                    </p>
+
+                    @if (!string.IsNullOrWhiteSpace(currentImg))
+                    {
+                        <div class="mb-3">
+                            <div class="small text-muted mb-1">Imagen actual</div>
+                            <img src="@currentImg" alt="Actual" class="img-thumbnail"
+                                 style="max-height: 140px; object-fit: contain;"
+                                 onerror="this.style.display='none'" />
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label" for="imageFile">Subir nueva desde la PC</label>
+                        <input type="file" name="imageFile" id="imageFile" class="form-control"
+                               accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif" />
+                        <div class="form-text">JPG, PNG, WEBP o GIF · máximo 5 MB</div>
+                    </div>
+
+                    <div class="mb-2 text-center text-muted small">— o URL —</div>
+
+                    <div class="mb-2">
+                        <label asp-for="ImageUrl" class="form-label">URL de imagen</label>
+                        <input asp-for="ImageUrl" class="form-control" id="ImageUrl"
+                               placeholder="/images/... o https://..." />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="mt-2">
+                        <img id="imagePreview" src="" alt="Vista previa nueva" class="img-thumbnail d-none"
+                             style="max-height: 180px; object-fit: contain;" />
+                    </div>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -70,4 +106,34 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var fileInput = document.getElementById('imageFile');
+            var urlInput = document.getElementById('ImageUrl');
+            var preview = document.getElementById('imagePreview');
+
+            function showPreview(src) {
+                if (!src) {
+                    preview.classList.add('d-none');
+                    preview.removeAttribute('src');
+                    return;
+                }
+                preview.src = src;
+                preview.classList.remove('d-none');
+            }
+
+            if (fileInput) {
+                fileInput.addEventListener('change', function () {
+                    var f = fileInput.files && fileInput.files[0];
+                    if (f) showPreview(URL.createObjectURL(f));
+                });
+            }
+            if (urlInput) {
+                urlInput.addEventListener('input', function () {
+                    if (fileInput && fileInput.files && fileInput.files.length) return;
+                    showPreview(urlInput.value.trim());
+                });
+            }
+        })();
+    </script>
 }
