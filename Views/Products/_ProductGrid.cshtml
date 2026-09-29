@@ -20,10 +20,22 @@
                         <a asp-action="Details" asp-route-id="@product.Id" class="btn btn-outline-primary btn-sm flex-grow-1">
                             Ver detalle
                         </a>
-                        <a asp-controller="Checkout" asp-action="Index" asp-route-productId="@product.Id"
-                           class="btn btn-primary btn-sm flex-grow-1">
-                            <i class="bi bi-bag-check me-1"></i>Comprar
-                        </a>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-controller="Checkout" asp-action="Index" asp-route-productId="@product.Id"
+                               class="btn btn-primary btn-sm flex-grow-1">
+                                <i class="bi bi-bag-check me-1"></i>Comprar
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login"
+                               asp-route-returnUrl="@Url.Action("Index", "Checkout", new { productId = product.Id })"
+                               class="btn btn-primary btn-sm flex-grow-1"
+                               title="Inicia sesión para comprar">
+                                <i class="bi bi-person-lock me-1"></i>Inicia sesión para comprar
+                            </a>
+                        }
                         @if (User.IsInRole("Admin"))
                         {
                             <a asp-action="Edit" asp-route-id="@product.Id" class="btn btn-outline-warning btn-sm">Editar</a>

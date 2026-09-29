@@ -4,17 +4,20 @@ using EcommerceApp.Data;
 using EcommerceApp.Models;
 using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace EcommerceApp.Controllers;
 
+[Authorize] // Solo usuarios con cuenta registrada pueden comprar
 public class CheckoutController(
     ApplicationDbContext db,
     StripeCheckoutService stripe,
-    IConfiguration config) : Controller
+    IConfiguration config,
+    UserManager<ApplicationUser> userManager) : Controller
 {
-    [AllowAnonymous]
+
     [HttpGet]
     public async Task<IActionResult> Index(int productId, int qty = 1)
     {
@@ -22,6 +25,7 @@ public class CheckoutController(
         if (product is null) return NotFound();
 
         qty = Math.Clamp(qty, 1, 500);
+        var user = await userManager.GetUserAsync(User);
         var vm = new CheckoutViewModel
         {
             ProductId = product.Id,
@@ -29,14 +33,17 @@ public class CheckoutController(
             ImageUrl = product.ImageUrl,
             UnitPrice = product.Price,
             Quantity = qty,
-            PaymentMethod = "Registro"
+            PaymentMethod = "Registro",
+            CustomerName = user?.FullName ?? user?.UserName ?? "",
+            CustomerEmail = user?.Email ?? "",
+            CustomerPhone = ""
         };
         ViewBag.StripeEnabled = stripe.IsConfigured;
         ViewBag.Payment = GetPaymentOptions();
+        ViewBag.UserEmail = user?.Email;
         return View(vm);
     }
 
-    [AllowAnonymous]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Index(CheckoutViewModel model)
@@ -144,7 +151,6 @@ public class CheckoutController(
         return RedirectToAction(nameof(Transfer), new { code = order.OrderCode });
     }
 
-    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Transfer(string code)
     {
@@ -155,7 +161,6 @@ public class CheckoutController(
         return View(order);
     }
 
-    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Success(string code, string? session_id)
     {
@@ -173,7 +178,6 @@ public class CheckoutController(
         return View(order);
     }
 
-    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Cancel(string code)
     {

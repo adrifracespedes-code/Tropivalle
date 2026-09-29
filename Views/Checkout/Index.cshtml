@@ -8,6 +8,10 @@
     <h1 class="mb-1" style="color: var(--tv-green-dark);">Finalizar compra</h1>
     <div class="section-divider"></div>
     <p class="text-muted">Pago seguro · TropiValle Cochabamba</p>
+    <p class="small text-success mb-0">
+        <i class="bi bi-shield-check me-1"></i>Compras solo con cuenta registrada
+        @if (ViewBag.UserEmail != null) { <span>· @ViewBag.UserEmail</span> }
+    </p>
 </div>
 
 @if (TempData["Error"] != null)
