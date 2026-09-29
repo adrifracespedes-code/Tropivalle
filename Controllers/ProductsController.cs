@@ -1,6 +1,7 @@
 using EcommerceApp.Data;
-using EcommerceApp.Models;
 using EcommerceApp.Helpers;
+using EcommerceApp.Models;
+using EcommerceApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 namespace EcommerceApp.Controllers;
 
 [Authorize]
-public class ProductsController(ApplicationDbContext context, IWebHostEnvironment env) : Controller
+public class ProductsController(
+    ApplicationDbContext context,
+    IWebHostEnvironment env,
+    GlobalImageStorage globalImages) : Controller
 {
     private static readonly string[] KnownCategories =
     [
@@ -83,35 +87,17 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Product product, IFormFile? imageFile)
     {
-        // La imagen no es obligatoria: puede ser archivo, URL o ninguna
         if (imageFile is { Length: > 0 })
         {
             var saved = await SaveProductImageAsync(imageFile);
             if (saved is null)
-            {
                 ModelState.AddModelError("ImageUrl", "Archivo no válido. Usa JPG, PNG, WEBP o GIF (máx. 5 MB).");
-            }
             else
-            {
                 product.ImageUrl = saved;
-            }
         }
         else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
         {
-            {
-            var u = product.ImageUrl.Trim();
-            // Guardar ruta relativa, nunca localhost
-            if (u.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
-                u.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
-                u.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase))
-            {
-                if (Uri.TryCreate(u, UriKind.Absolute, out var uri))
-                    u = uri.AbsolutePath;
-            }
-            if (!u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.StartsWith("/"))
-                u = "/" + u;
-            product.ImageUrl = u;
-        }
+            product.ImageUrl = NormalizeStoredUrl(product.ImageUrl);
         }
 
         if (!ModelState.IsValid)
@@ -147,7 +133,6 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         if (existing is null)
             return NotFound();
 
-        // Prioridad: archivo subido > URL escrita > mantener la actual
         if (imageFile is { Length: > 0 })
         {
             var saved = await SaveProductImageAsync(imageFile);
@@ -157,31 +142,16 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
             }
             else
             {
-                // Borrar archivo local anterior si era de /images/uploads/
                 TryDeleteLocalUpload(existing.ImageUrl);
                 product.ImageUrl = saved;
             }
         }
         else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
         {
-            {
-            var u = product.ImageUrl.Trim();
-            // Guardar ruta relativa, nunca localhost
-            if (u.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
-                u.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
-                u.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase))
-            {
-                if (Uri.TryCreate(u, UriKind.Absolute, out var uri))
-                    u = uri.AbsolutePath;
-            }
-            if (!u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.StartsWith("/"))
-                u = "/" + u;
-            product.ImageUrl = u;
-        }
+            product.ImageUrl = NormalizeStoredUrl(product.ImageUrl);
         }
         else
         {
-            // No envió archivo ni URL: conservar la imagen actual
             product.ImageUrl = existing.ImageUrl;
         }
 
@@ -206,13 +176,9 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
-        var product = await context.Products
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Id == id);
-
+        var product = await context.Products.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
         if (product is null)
             return NotFound();
-
         return View(product);
     }
 
@@ -232,7 +198,11 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Guarda la imagen en wwwroot/images/uploads y devuelve la URL relativa, o null si falla.</summary>
+    /// <summary>
+    /// Guarda imagen de forma GLOBAL:
+    /// 1) Supabase Storage (URL https pública) si está configurado
+    /// 2) Si no, disco local + URL absoluta del sitio (https://tu-dominio/...)
+    /// </summary>
     private async Task<string?> SaveProductImageAsync(IFormFile file)
     {
         if (file.Length <= 0 || file.Length > MaxImageBytes)
@@ -242,15 +212,20 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         if (string.IsNullOrEmpty(ext) || !AllowedExt.Contains(ext))
             return null;
 
-        // Content-Type básico
         var contentType = file.ContentType?.ToLowerInvariant() ?? "";
         if (contentType.Length > 0 && !contentType.StartsWith("image/"))
             return null;
 
+        var fileName = $"{Guid.NewGuid():N}{ext.ToLowerInvariant()}";
+
+        // 1) Almacenamiento global (Supabase)
+        var globalUrl = await globalImages.UploadAsync(file, fileName);
+        if (!string.IsNullOrWhiteSpace(globalUrl))
+            return globalUrl;
+
+        // 2) Fallback: disco del servidor + URL absoluta pública del host actual
         var uploadsDir = Path.Combine(env.WebRootPath, "images", "uploads");
         Directory.CreateDirectory(uploadsDir);
-
-        var fileName = $"{Guid.NewGuid().ToString("N")}{ext.ToLowerInvariant()}";
         var physicalPath = Path.Combine(uploadsDir, fileName);
 
         await using (var stream = System.IO.File.Create(physicalPath))
@@ -258,18 +233,73 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
             await file.CopyToAsync(stream);
         }
 
-        return $"/images/uploads/{fileName}";
+        var relative = $"/images/uploads/{fileName}";
+        return ToAbsolutePublicUrl(relative);
+    }
+
+    /// <summary>Convierte /images/... en https://dominio-actual/images/...</summary>
+    private string ToAbsolutePublicUrl(string relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath))
+            return relativePath;
+
+        if (relativePath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            relativePath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return relativePath;
+
+        if (!relativePath.StartsWith('/'))
+            relativePath = "/" + relativePath;
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}".TrimEnd('/');
+        // Preferir https en producción detrás de proxy
+        if (Request.Headers.TryGetValue("X-Forwarded-Proto", out var proto) &&
+            !string.IsNullOrWhiteSpace(proto))
+        {
+            baseUrl = $"{proto.ToString().Split(',')[0].Trim()}://{Request.Host}".TrimEnd('/');
+        }
+
+        return baseUrl + relativePath;
+    }
+
+    private static string NormalizeStoredUrl(string? imageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(imageUrl))
+            return "";
+
+        var u = imageUrl.Trim();
+
+        if (u.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
+            u.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
+            u.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase) ||
+            u.StartsWith("https://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Uri.TryCreate(u, UriKind.Absolute, out var uri))
+                u = uri.AbsolutePath;
+        }
+
+        if (!u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.StartsWith('/'))
+            u = "/" + u;
+
+        return u;
     }
 
     private void TryDeleteLocalUpload(string? imageUrl)
     {
         if (string.IsNullOrWhiteSpace(imageUrl))
             return;
-        // Solo borrar archivos que subimos nosotros
-        if (!imageUrl.StartsWith("/images/uploads/", StringComparison.OrdinalIgnoreCase))
+
+        // Solo archivos locales /images/uploads/ o URL que termine en esa ruta
+        string? pathPart = null;
+        if (imageUrl.StartsWith("/images/uploads/", StringComparison.OrdinalIgnoreCase))
+            pathPart = imageUrl;
+        else if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri) &&
+                 uri.AbsolutePath.StartsWith("/images/uploads/", StringComparison.OrdinalIgnoreCase))
+            pathPart = uri.AbsolutePath;
+
+        if (pathPart is null)
             return;
 
-        var relative = imageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+        var relative = pathPart.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
         var full = Path.Combine(env.WebRootPath, relative);
         try
         {
@@ -278,7 +308,7 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         }
         catch
         {
-            // no bloquear si no se puede borrar
+            // no bloquear
         }
     }
 }

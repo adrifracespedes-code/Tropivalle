@@ -64,6 +64,8 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddHttpClient("stripe");
 builder.Services.AddScoped<EcommerceApp.Services.StripeCheckoutService>();
+builder.Services.AddHttpClient("supabase-storage");
+builder.Services.AddScoped<EcommerceApp.Services.GlobalImageStorage>();
 
 var app = builder.Build();
 
