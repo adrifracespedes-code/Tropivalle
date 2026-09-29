@@ -1,3 +1,4 @@
+@using EcommerceApp.Helpers
 @model IReadOnlyList<EcommerceApp.Controllers.ProductSlideVm>
 @{
     ViewData["Title"] = "Inicio";
@@ -121,7 +122,7 @@
                         {
                             var img = productImgs[i];
                             <div class="nosotros-slide @(i == 0 ? "is-active" : "")" data-index="@i">
-                                <img src="@img.ImageUrl" alt="@img.Name" loading="@(i == 0 ? "eager" : "lazy")" />
+                                <img src="@ImageUrlHelper.Resolve(img.ImageUrl)" alt="@img.Name" loading="@(i == 0 ? "eager" : "lazy")" />
                                 <span class="nosotros-slide-caption">@img.Name</span>
                             </div>
                         }

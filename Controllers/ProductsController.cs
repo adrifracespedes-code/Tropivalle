@@ -1,5 +1,6 @@
 using EcommerceApp.Data;
 using EcommerceApp.Models;
+using EcommerceApp.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -97,7 +98,20 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         }
         else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
         {
-            product.ImageUrl = product.ImageUrl.Trim();
+            {
+            var u = product.ImageUrl.Trim();
+            // Guardar ruta relativa, nunca localhost
+            if (u.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
+                u.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
+                u.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Uri.TryCreate(u, UriKind.Absolute, out var uri))
+                    u = uri.AbsolutePath;
+            }
+            if (!u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.StartsWith("/"))
+                u = "/" + u;
+            product.ImageUrl = u;
+        }
         }
 
         if (!ModelState.IsValid)
@@ -150,7 +164,20 @@ public class ProductsController(ApplicationDbContext context, IWebHostEnvironmen
         }
         else if (!string.IsNullOrWhiteSpace(product.ImageUrl))
         {
-            product.ImageUrl = product.ImageUrl.Trim();
+            {
+            var u = product.ImageUrl.Trim();
+            // Guardar ruta relativa, nunca localhost
+            if (u.StartsWith("http://localhost", StringComparison.OrdinalIgnoreCase) ||
+                u.StartsWith("https://localhost", StringComparison.OrdinalIgnoreCase) ||
+                u.StartsWith("http://127.0.0.1", StringComparison.OrdinalIgnoreCase))
+            {
+                if (Uri.TryCreate(u, UriKind.Absolute, out var uri))
+                    u = uri.AbsolutePath;
+            }
+            if (!u.StartsWith("http", StringComparison.OrdinalIgnoreCase) && !u.StartsWith("/"))
+                u = "/" + u;
+            product.ImageUrl = u;
+        }
         }
         else
         {

@@ -1,11 +1,14 @@
+@using EcommerceApp.Helpers
 @model IEnumerable<Product>
 <div class="row g-4">
 @foreach (var product in Model)
 {
     <div class="col-md-6 col-lg-4">
         <div class="card product-card h-100">
-            <img src="@(string.IsNullOrWhiteSpace(product.ImageUrl) ? "https://placehold.co/800x500/e8f8ef/1a5c3a?text=TropiValle" : product.ImageUrl)"
-                 class="card-img-top product-image" alt="@product.Name" />
+            <img src="@ImageUrlHelper.Resolve(product.ImageUrl)"
+                 class="card-img-top product-image" alt="@product.Name"
+                 loading="lazy"
+                 onerror="this.onerror=null;this.src='@ImageUrlHelper.Placeholder';" />
             <div class="card-body d-flex flex-column">
                 <span class="badge badge-pack align-self-start mb-2">
                     <i class="bi bi-tag me-1"></i>@(product.Category ?? "Producto")
