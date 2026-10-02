@@ -7,28 +7,52 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connection string: prioriza variable de entorno (Render/Supabase)
+// Solo local: appsettings.Local.json (ignorado por Git) → misma BD Supabase sin tocar Render/GitHub
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
+// Connection: local (SQLite) o Supabase/Postgres (producción)
+// Prioridad: env CONNECTIONSTRINGS__DEFAULTCONNECTION | DATABASE_URL | appsettings
 var connectionString =
     Environment.GetEnvironmentVariable("CONNECTIONSTRINGS__DEFAULTCONNECTION")
     ?? Environment.GetEnvironmentVariable("DATABASE_URL")
     ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException(
-        "Falta ConnectionStrings:DefaultConnection. Configúrala en Render como env var CONNECTIONSTRINGS__DEFAULTCONNECTION.");
+    ?? "";
 
-// Si viene como DATABASE_URL de estilo postgres://... convertir a Npgsql
+if (string.IsNullOrWhiteSpace(connectionString))
+    throw new InvalidOperationException(
+        "Falta ConnectionStrings:DefaultConnection. " +
+        "Pon la cadena de Supabase en appsettings.Local.json (local) o en CONNECTIONSTRINGS__DEFAULTCONNECTION (Render).");
+
+// URI postgres:// → formato Npgsql
 if (connectionString.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
     connectionString.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
 {
     connectionString = ConvertPostgresUrl(connectionString);
 }
 
+// Provider: sqlite si Data Source=... o Database:Provider=sqlite; si no, PostgreSQL
+var providerEnv = Environment.GetEnvironmentVariable("DATABASE_PROVIDER");
+var providerCfg = builder.Configuration["Database:Provider"] ?? "";
+var useSqlite =
+    string.Equals(providerEnv, "sqlite", StringComparison.OrdinalIgnoreCase)
+    || string.Equals(providerCfg, "sqlite", StringComparison.OrdinalIgnoreCase)
+    || connectionString.Contains("Data Source=", StringComparison.OrdinalIgnoreCase)
+    || connectionString.EndsWith(".db", StringComparison.OrdinalIgnoreCase);
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    options.UseNpgsql(connectionString);
-    // Evita el error PendingModelChangesWarning al arrancar
+    if (useSqlite)
+        options.UseSqlite(connectionString);
+    else
+        options.UseNpgsql(connectionString);
+
     options.ConfigureWarnings(w =>
         w.Ignore(RelationalEventId.PendingModelChangesWarning));
 });
+
+Console.WriteLine(useSqlite
+    ? "[DB] Proveedor: SQLite (local)"
+    : "[DB] Proveedor: PostgreSQL (Supabase/remoto)");
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -114,48 +138,60 @@ static class DatabaseInitializer
 
         try
         {
-            await db.Database.MigrateAsync();
+            var isSqlite = db.Database.IsSqlite();
 
-            // Tabla Sales (gráfica) si aún no existe
-            await db.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS "Sales" (
-                    "Id" SERIAL PRIMARY KEY,
-                    "ProductId" integer NOT NULL,
-                    "ProductName" character varying(150) NOT NULL,
-                    "Category" character varying(100) NULL,
-                    "Quantity" integer NOT NULL,
-                    "UnitPrice" numeric(18,2) NOT NULL,
-                    "TotalAmount" numeric(18,2) NOT NULL,
-                    "SoldAt" timestamp with time zone NOT NULL,
-                    "Notes" character varying(300) NULL
-                );
-                CREATE INDEX IF NOT EXISTS "IX_Sales_SoldAt" ON "Sales" ("SoldAt");
-                """);
+            if (isSqlite)
+            {
+                // Local: crea el esquema desde el modelo (sin migraciones Postgres)
+                await db.Database.EnsureCreatedAsync();
+                Console.WriteLine("[DB] SQLite listo (EnsureCreated).");
+            }
+            else
+            {
+                await db.Database.MigrateAsync();
 
-            await db.Database.ExecuteSqlRawAsync("""
-                CREATE TABLE IF NOT EXISTS "CustomerOrders" (
-                    "Id" SERIAL PRIMARY KEY,
-                    "OrderCode" character varying(40) NOT NULL,
-                    "ProductId" integer NOT NULL,
-                    "ProductName" character varying(150) NOT NULL,
-                    "Category" character varying(100) NULL,
-                    "Quantity" integer NOT NULL,
-                    "UnitPrice" numeric(18,2) NOT NULL,
-                    "TotalAmount" numeric(18,2) NOT NULL,
-                    "CustomerName" character varying(120) NOT NULL,
-                    "CustomerPhone" character varying(30) NULL,
-                    "CustomerEmail" character varying(120) NULL,
-                    "PaymentMethod" character varying(30) NOT NULL,
-                    "Status" character varying(20) NOT NULL,
-                    "StripeSessionId" character varying(120) NULL,
-                    "StripePaymentIntentId" character varying(120) NULL,
-                    "Notes" character varying(400) NULL,
-                    "CreatedAt" timestamp with time zone NOT NULL,
-                    "PaidAt" timestamp with time zone NULL
-                );
-                CREATE UNIQUE INDEX IF NOT EXISTS "IX_CustomerOrders_OrderCode" ON "CustomerOrders" ("OrderCode");
-                CREATE INDEX IF NOT EXISTS "IX_CustomerOrders_CreatedAt" ON "CustomerOrders" ("CreatedAt");
-                """);
+                // Tablas extra por si la migración aún no las incluye (PostgreSQL / Supabase)
+                await db.Database.ExecuteSqlRawAsync("""
+                    CREATE TABLE IF NOT EXISTS "Sales" (
+                        "Id" SERIAL PRIMARY KEY,
+                        "ProductId" integer NOT NULL,
+                        "ProductName" character varying(150) NOT NULL,
+                        "Category" character varying(100) NULL,
+                        "Quantity" integer NOT NULL,
+                        "UnitPrice" numeric(18,2) NOT NULL,
+                        "TotalAmount" numeric(18,2) NOT NULL,
+                        "SoldAt" timestamp with time zone NOT NULL,
+                        "Notes" character varying(300) NULL
+                    );
+                    CREATE INDEX IF NOT EXISTS "IX_Sales_SoldAt" ON "Sales" ("SoldAt");
+                    """);
+
+                await db.Database.ExecuteSqlRawAsync("""
+                    CREATE TABLE IF NOT EXISTS "CustomerOrders" (
+                        "Id" SERIAL PRIMARY KEY,
+                        "OrderCode" character varying(40) NOT NULL,
+                        "ProductId" integer NOT NULL,
+                        "ProductName" character varying(150) NOT NULL,
+                        "Category" character varying(100) NULL,
+                        "Quantity" integer NOT NULL,
+                        "UnitPrice" numeric(18,2) NOT NULL,
+                        "TotalAmount" numeric(18,2) NOT NULL,
+                        "CustomerName" character varying(120) NOT NULL,
+                        "CustomerPhone" character varying(30) NULL,
+                        "CustomerEmail" character varying(120) NULL,
+                        "PaymentMethod" character varying(30) NOT NULL,
+                        "Status" character varying(20) NOT NULL,
+                        "StripeSessionId" character varying(120) NULL,
+                        "StripePaymentIntentId" character varying(120) NULL,
+                        "Notes" character varying(400) NULL,
+                        "CreatedAt" timestamp with time zone NOT NULL,
+                        "PaidAt" timestamp with time zone NULL
+                    );
+                    CREATE UNIQUE INDEX IF NOT EXISTS "IX_CustomerOrders_OrderCode" ON "CustomerOrders" ("OrderCode");
+                    CREATE INDEX IF NOT EXISTS "IX_CustomerOrders_CreatedAt" ON "CustomerOrders" ("CreatedAt");
+                    """);
+                Console.WriteLine("[DB] PostgreSQL/Supabase migrado.");
+            }
         }
         catch (Exception ex)
         {

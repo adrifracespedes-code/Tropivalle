@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Local SQLite
+tropivalle-local.db
+tropivalle-local.db-*
+
+# Secretos solo en tu PC (Supabase local) — NO subir a GitHub
+appsettings.Local.json
+appsettings.*.Local.json
+tropivalle-local.db
+tropivalle-local.db-*
